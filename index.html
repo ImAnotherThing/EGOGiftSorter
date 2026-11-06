@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gift bias sorter</title>
+  <style>
+    :root {
+      --bg: #e6eaee;
+      --panel: #f7f9fa;
+      --ink: #1a2232;
+      --mute: #586376;
+      --line: #c1c9d2;
+      --acc: #8c2f39;
+      --acc2: #6c222b
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif
+    }
+
+    h1,
+    h2,
+    .name,
+    .or {
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif
+    }
+
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 40px 20px 72px
+    }
+
+    h1 {
+      font-size: clamp(36px, 7vw, 60px);
+      line-height: 1.04;
+      margin: 0 0 12px;
+      letter-spacing: -.015em
+    }
+
+    h2 {
+      font-size: clamp(22px, 4vw, 30px);
+      margin: 28px 0 20px;
+      font-weight: 600
+    }
+
+    .lead {
+      max-width: 52ch;
+      color: var(--mute);
+      margin: 0 0 28px;
+      font-size: 18px
+    }
+
+    .note {
+      color: var(--mute);
+      font-size: 14px;
+      margin: 8px 0
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    .btn,
+    input[type=file]::file-selector-button {
+      font: inherit;
+      font-weight: 600;
+      border: 1.5px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer
+    }
+
+    .btn.primary,
+    input[type=file]::file-selector-button {
+      background: var(--ink);
+      color: var(--bg);
+      margin-right: 12px
+    }
+
+    .btn:hover {
+      background: var(--ink);
+      color: var(--bg)
+    }
+
+    .btn.primary:hover {
+      background: var(--acc);
+      border-color: var(--acc)
+    }
+
+    input[type=file] {
+      font-size: 15px;
+      color: var(--mute)
+    }
+
+    input[type=number],
+    input[type=text] {
+      font: inherit;
+      padding: 8px 10px;
+      border: 1.5px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--ink);
+      width: 11em
+    }
+
+    input[type=number] {
+      width: 6em
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+      margin: 0 0 14px
+    }
+
+    .row label {
+      min-width: 11em;
+      font-weight: 600
+    }
+
+    a.lnk,
+    button.lnk {
+      background: none;
+      border: 0;
+      color: var(--acc);
+      font: inherit;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--acc);
+      outline-offset: 3px
+    }
+
+    .top {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--mute)
+    }
+
+    .bar {
+      height: 6px;
+      background: var(--line);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--acc);
+      transition: width .25s
+    }
+
+    .duel {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px
+    }
+
+    .or {
+      font-style: italic;
+      font-size: 24px;
+      color: var(--mute)
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 26px 14px 22px;
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--ink);
+      font: inherit;
+      transition: border-color .15s, transform .15s
+    }
+
+    .card:hover {
+      border-color: var(--acc);
+      transform: translateY(-3px)
+    }
+
+    .card:active {
+      transform: none;
+      background: #fff
+    }
+
+    .card img {
+      width: min(176px, 32vw);
+      height: min(176px, 32vw);
+      object-fit: contain
+    }
+
+    .card .name {
+      font-size: clamp(17px, 3vw, 22px);
+      line-height: 1.2;
+      text-align: center;
+      font-weight: 600
+    }
+
+    .tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 26px 0
+    }
+
+    #list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      counter-reset: r;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 8px 18px
+    }
+
+    #list li {
+      counter-increment: r;
+      display: grid;
+      grid-template-columns: 2.4rem 56px 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--line)
+    }
+
+    #list li::before {
+      content: counter(r);
+      font-family: Georgia, serif;
+      font-size: 18px;
+      color: var(--acc);
+      text-align: right
+    }
+
+    #list img {
+      width: 56px;
+      height: 56px;
+      object-fit: contain
+    }
+
+    #list .name {
+      font-size: 17px;
+      line-height: 1.2
+    }
+
+    #list li:nth-child(-n+3) {
+      grid-column: 1/-1;
+      grid-template-columns: 3rem 96px 1fr;
+      background: var(--panel);
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 14px
+    }
+
+    #list li:nth-child(-n+3)::before {
+      font-size: 32px
+    }
+
+    #list li:nth-child(-n+3) img {
+      width: 96px;
+      height: 96px
+    }
+
+    #list li:nth-child(-n+3) .name {
+      font-size: 24px
+    }
+
+    @media(max-width:520px) {
+      .duel {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .or {
+        display: none
+      }
+
+      .row label {
+        min-width: 100%
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      * {
+        transition: none !important
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <section id="setup">
+      <h1>Gift bias sorter</h1>
+      <p class="lead">Pick the gift you like more, again and again. When the comparisons run out, you get your full
+        ranking.</p>
+      <p id="found" class="note">Loading gift images from the website...</p>
+      <div id="opts" hidden>
+        <div class="row">
+          <label for="count">Gifts to sort</label>
+          <input id="count" type="number" min="2" value="32">
+          <button id="all" class="lnk" type="button">Use all</button>
+          <span id="est" class="note"></span>
+        </div>
+        <div class="row">
+          <label for="filter">Only names containing</label>
+          <input id="filter" type="text" placeholder="optional">
+        </div>
+        <button id="start" class="btn primary" type="button">Start sorting</button>
+      </div>
+    </section>
+
+    <section id="sort" hidden>
+      <div class="top"><span id="prog"></span>
+        <div class="bar"><i id="fill"></i></div>
+      </div>
+      <h2>Which gift do you like more?</h2>
+      <div class="duel">
+        <button class="card" id="L" type="button"><img alt=""><span class="name"></span></button>
+        <span class="or">or</span>
+        <button class="card" id="R" type="button"><img alt=""><span class="name"></span></button>
+      </div>
+      <div class="tools">
+        <button id="undo" class="btn" type="button">Undo last choice</button>
+        <span class="note">Left and right arrow keys also work.</span>
+      </div>
+    </section>
+
+    <section id="result" hidden>
+      <h1>Your ranking</h1>
+      <div class="tools">
+        <button id="save" class="btn primary" type="button">Save top 20 as image</button>
+        <button id="copy" class="btn" type="button">Copy list</button>
+        <button id="again" class="btn" type="button">Sort again</button>
+      </div>
+      <ol id="list"></ol>
+    </section>
+
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    let all = [], pool = [], choices = [], gen, state, ranked = [];
+
+    const maxCmp = n => n < 2 ? 0 : maxCmp(n >> 1) + maxCmp(n - (n >> 1)) + n - 1;
+
+    // Merge sort that pauses on every comparison (0 = left wins, 1 = right wins)
+    function* msort(a) {
+      if (a.length <= 1) return a;
+      const m = a.length >> 1;
+      const l = yield* msort(a.slice(0, m)), r = yield* msort(a.slice(m));
+      const out = []; let i = 0, j = 0;
+      while (i < l.length && j < r.length) {
+        const c = yield [l[i], r[j]];
+        out.push(c === 0 ? l[i++] : r[j++]);
+      }
+      return out.concat(l.slice(i), r.slice(j));
+    }
+
+    function show(id) {
+      for (const s of ['setup', 'sort', 'result']) $(s).hidden = s !== id;
+      window.scrollTo(0, 0);
+    }
+
+    function matches() {
+      const f = $('filter').value.trim().toLowerCase();
+      return all.filter(x => x.name.toLowerCase().includes(f));
+    }
+
+    function updateOpts() {
+      const n = matches().length;
+      $('count').max = n;
+      if (+$('count').value > n) $('count').value = n;
+      $('est').textContent = n + ' match' + (n === 1 ? '' : 'es') + ', about ' + maxCmp(Math.max(2, +$('count').value || 2)) + ' choices at most';
+    }
+
+    // Load the image filenames listed in images.json.
+    // Keep images.json and the ego_gifts folder beside this HTML file.
+    async function loadImages() {
+      $('found').textContent = 'Loading gift images...';
+      $('opts').hidden = true;
+
+      try {
+        const response = await fetch('./images.json');
+        if (!response.ok) {
+          throw new Error('Could not load images.json (HTTP ' + response.status + ').');
+        }
+
+        const files = await response.json();
+        if (!Array.isArray(files)) {
+          throw new Error('images.json must contain a JSON array of filenames.');
+        }
+
+        all = files
+          .filter(file => typeof file === 'string' && /\.png$/i.test(file))
+          .map(file => {
+            const filename = file.split('/').pop();
+            return {
+              name: filename.replace(/\.png$/i, '').replace(/_/g, ' ').replace(/ Gift$/, ''),
+              url: './ego_gifts/' + filename.split('/').map(encodeURIComponent).join('/')
+            };
+          })
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        if (all.length === 0) {
+          $('found').textContent = 'No PNG filenames found in images.json.';
+          return;
+        }
+
+        $('found').textContent = all.length + ' PNG images listed. Images will load as needed.';
+        $('opts').hidden = all.length < 2;
+        $('count').value = Math.min(32, all.length);
+        updateOpts();
+      } catch (error) {
+        $('found').textContent = 'Could not load gift images: ' + error.message;
+        console.error(error);
+      }
+    }
+
+    loadImages();
+    $('filter').oninput = updateOpts;
+    $('count').oninput = updateOpts;
+    $('all').onclick = () => { $('count').value = matches().length; updateOpts(); };
+
+    $('start').onclick = () => {
+      const list = matches();
+      const n = Math.max(2, Math.min(+$('count').value || 2, list.length));
+      if (list.length < 2) { $('est').textContent = 'Need at least 2 matching gifts.'; return; }
+      pool = list.slice();
+      for (let i = pool.length - 1; i > 0; i--) {        // shuffle, then take n
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      pool = pool.slice(0, n);
+      choices = [];
+      replay();
+      show('sort');
+      render();
+    };
+
+    function replay() {
+      gen = msort(pool);
+      state = gen.next();
+      for (const c of choices) state = gen.next(c);
+    }
+
+    function render() {
+      if (state.done) { ranked = state.value; return finish(); }
+      const [a, b] = state.value, cap = maxCmp(pool.length);
+      for (const [id, it] of [['L', a], ['R', b]]) {
+        $(id).querySelector('img').src = it.url;
+        $(id).querySelector('.name').textContent = it.name;
+      }
+      $('prog').textContent = 'Choice ' + (choices.length + 1) + ' of up to ' + cap;
+      $('fill').style.width = (choices.length / cap * 100) + '%';
+      $('undo').disabled = !choices.length;
+    }
+
+    function choose(c) {
+      if (!state || state.done) return;
+      choices.push(c);
+      state = gen.next(c);
+      render();
+    }
+    $('L').onclick = () => choose(0);
+    $('R').onclick = () => choose(1);
+    $('undo').onclick = () => { if (choices.length) { choices.pop(); replay(); render(); } };
+    document.addEventListener('keydown', e => {
+      if ($('sort').hidden) return;
+      if (e.key === 'ArrowLeft') choose(0);
+      if (e.key === 'ArrowRight') choose(1);
+    });
+
+    function finish() {
+      const ol = $('list'); ol.textContent = '';
+      for (const it of ranked) {
+        const li = document.createElement('li');
+        const img = document.createElement('img'); img.src = it.url; img.alt = '';
+        const nm = document.createElement('span'); nm.className = 'name'; nm.textContent = it.name;
+        li.append(img, nm); ol.append(li);
+      }
+      show('result');
+    }
+
+    $('again').onclick = () => show('setup');
+
+    $('copy').onclick = async () => {
+      const text = ranked.map((x, i) => (i + 1) + '. ' + x.name).join('\n');
+      try { await navigator.clipboard.writeText(text); }
+      catch (_) {
+        const t = document.createElement('textarea'); t.value = text; document.body.append(t);
+        t.select(); document.execCommand('copy'); t.remove();
+      }
+      $('copy').textContent = 'Copied';
+      setTimeout(() => $('copy').textContent = 'Copy list', 1500);
+    };
+
+    $('save').onclick = async () => {
+      const top = ranked.slice(0, 20), cols = 5, cw = 190, ch = 176, pad = 24, head = 72;
+      const imgs = await Promise.all(top.map(it => new Promise(res => {
+        const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = it.url;
+      })));
+      const rows = Math.ceil(top.length / cols);
+      const c = document.createElement('canvas');
+      c.width = cols * cw + pad * 2; c.height = head + rows * ch + pad;
+      const g = c.getContext('2d');
+      g.fillStyle = '#e6eaee'; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = '#1a2232'; g.font = '600 32px Georgia, serif'; g.textBaseline = 'alphabetic';
+      g.fillText('My gift ranking', pad, 50);
+      top.forEach((it, i) => {
+        const x = pad + (i % cols) * cw, y = head + Math.floor(i / cols) * ch;
+        g.fillStyle = '#f7f9fa'; g.fillRect(x + 4, y + 4, cw - 8, ch - 8);
+        if (imgs[i]) g.drawImage(imgs[i], x + (cw - 96) / 2, y + 14, 96, 96);
+        g.fillStyle = '#8c2f39'; g.font = '700 20px Georgia, serif'; g.textAlign = 'left';
+        g.fillText(String(i + 1), x + 14, y + 32);
+        g.fillStyle = '#1a2232'; g.font = '600 14px Georgia, serif'; g.textAlign = 'center';
+        let t = it.name;
+        while (g.measureText(t).width > cw - 24 && t.length > 3) t = t.slice(0, -2);
+        if (t !== it.name) t = t.trimEnd() + '…';
+        g.fillText(t, x + cw / 2, y + 136);
+      });
+      g.textAlign = 'left';
+      c.toBlob(b => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = 'gift_ranking.png'; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      });
+    };
+  </script>
+</body>
+
+</html>
